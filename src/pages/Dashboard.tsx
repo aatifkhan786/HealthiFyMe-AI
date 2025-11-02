@@ -31,6 +31,7 @@ interface Profile {
 interface FoodScan {
   user_id: string; food_name: string; calories_per_100g: number;
   protein_per_100g: number; consumed_at: string; portion_size: number;
+  ai_suggestion?: string | null;
 }
 
 const DashboardHeader = ({ onSignOut }: { onSignOut: () => void }) => (
@@ -126,7 +127,7 @@ const Dashboard = () => {
       setTodaysWater(0);
       localStorage.setItem('lastVisitDate', today);
     }
-  }, []); 
+  }, []);
   // =========================================================
 
   const fetchProfile = async () => {
@@ -361,8 +362,16 @@ const Dashboard = () => {
                     <div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                       <div><p className="font-medium">{scan.food_name}</p><p className="text-sm text-muted-foreground">{scan.portion_size}g portion</p></div>
                       <div className="text-right">
-                        <p className="font-medium">{Math.round((scan.calories_per_100g || 0) * (scan.portion_size || 100) / 100)} cal</p>
-                        <p className="text-sm text-muted-foreground">{Math.round((scan.protein_per_100g || 0) * (scan.portion_size || 100) / 100)}g protein</p>
+                        <p className="font-medium">
+                          {scan.portion_size === 1
+                            ? Math.round(scan.calories_per_100g)
+                            : Math.round((scan.calories_per_100g || 0) * (scan.portion_size || 100) / 100)} cal
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {scan.portion_size === 1
+                            ? Math.round(scan.protein_per_100g)
+                            : Math.round((scan.protein_per_100g || 0) * (scan.portion_size || 100) / 100)}g protein
+                        </p>
                       </div>
                     </div>
                   ))}
