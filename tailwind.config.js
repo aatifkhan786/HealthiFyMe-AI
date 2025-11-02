@@ -7,6 +7,10 @@ export default {
   ],
   theme: {
   	extend: {
+		backgroundImage: {
+            "brand-gradient": "linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)))",
+            "gradient-hero": "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
+        },
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

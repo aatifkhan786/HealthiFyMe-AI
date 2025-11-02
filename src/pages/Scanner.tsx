@@ -16,7 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Camera, X, Sparkles, Type, HeartPulse, Zap, Salad, Beef, Droplets, Gauge, AlertTriangle, CheckCircle, Flame, Plus, Leaf, Info, ScanLine, BookOpen, LogOut
+  Camera, X, Sparkles, Type, HeartPulse, Zap, Salad, Beef, Droplets, Gauge, AlertTriangle, CheckCircle, Flame, Plus, Leaf, Info, ScanLine, BookOpen, LogOut, Bone, Feather, Sun, Wind, Banana
 } from 'lucide-react';
 
 // --- Environment Setup ---
@@ -39,6 +39,12 @@ interface NutritionData {
   total_sodium_mg: number;
   total_energy_kj: number; // New field for energy in kilojoules
   suggestion: string;
+  total_calcium_mg: number;
+  total_iron_mg: number;
+  total_vitamin_c_mg: number;
+  total_vitamin_a_mcg: number;
+  total_vitamin_d_mcg: number;
+  total_potassium_mg: number;
   precautions: string;
 }
 
@@ -49,8 +55,12 @@ Your task is to:
 2. Calculate the TOTAL nutritional values for that specific quantity.
 
 Respond ONLY in a valid JSON format. The JSON object must have these exact keys:
-"food_name" (string), "portion_analyzed" (string), "total_calories" (number), "total_protein" (number), "total_carbs" (number),
-"total_fat" (number), "total_sugar" (number), "total_fiber" (number), "total_sodium_mg" (number), "total_energy_kj" (number), "suggestion" (string), "precautions" (string).`;
+"food_name", "portion_analyzed", "total_calories", "total_protein", "total_carbs", "total_fat",
+"total_sugar", "total_fiber", "total_sodium_mg", "total_energy_kj",
+"total_calcium_mg", "total_iron_mg", "total_vitamin_c_mg",
+"total_vitamin_a_mcg", "total_vitamin_d_mcg", "total_potassium_mg",
+"suggestion", "precautions".`;
+
 
 
 // Smart JSON Parser (Updated for new interface)
@@ -58,7 +68,10 @@ function parseGeminiResponse(responseText: string): NutritionData {
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) { throw new Error("Invalid JSON structure in AI response."); }
   const parsedData = JSON.parse(jsonMatch[0]);
-  if (typeof parsedData.total_calories !== 'number' || typeof parsedData.total_energy_kj !== 'number') { throw new Error("AI returned invalid nutritional data."); }
+  // Check for a few key fields to ensure the structure is correct
+  if (typeof parsedData.total_calories !== 'number' || typeof parsedData.total_protein !== 'number' || typeof parsedData.total_calcium_mg !== 'number') {
+    throw new Error("AI returned invalid or incomplete nutritional data.");
+  }
   return parsedData as NutritionData;
 }
 
@@ -82,28 +95,137 @@ const ResultCard = ({ data, onLogMeal, user }: { data: NutritionData, onLogMeal:
   <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.5 }}>
     <Card className="mt-8 border-primary shadow-lg">
       <CardHeader className="bg-primary/5 rounded-t-lg">
-        <CardTitle className="flex items-center text-primary text-2xl"><Salad className="w-6 h-6 mr-3" />{data.food_name}</CardTitle>
+        <CardTitle className="flex items-center text-primary text-2xl">
+          <Salad className="w-6 h-6 mr-3" />
+          {data.food_name}
+        </CardTitle>
         <CardDescription>Nutritional breakdown for: {data.portion_analyzed}</CardDescription>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
+        {/* === MACRONUTRIENT CARDS (NO CHANGE) === */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
-          <div className="p-3 border rounded-lg bg-red-50/50"><Flame className="w-5 h-5 text-red-600 mx-auto mb-1" /><p className="text-lg font-bold">{Math.round(data.total_calories)}</p><p className="text-xs text-muted-foreground">Calories</p></div>
-          <div className="p-3 border rounded-lg bg-green-50/50"><Beef className="w-5 h-5 text-green-600 mx-auto mb-1" /><p className="text-lg font-bold">{data.total_protein.toFixed(1)}g</p><p className="text-xs text-muted-foreground">Protein</p></div>
-          <div className="p-3 border rounded-lg bg-blue-50/50"><Gauge className="w-5 h-5 text-blue-600 mx-auto mb-1" /><p className="text-lg font-bold">{data.total_carbs.toFixed(1)}g</p><p className="text-xs text-muted-foreground">Carbs</p></div>
-          <div className="p-3 border rounded-lg bg-yellow-50/50"><Droplets className="w-5 h-5 text-yellow-600 mx-auto mb-1" /><p className="text-lg font-bold">{data.total_fat.toFixed(1)}g</p><p className="text-xs text-muted-foreground">Fat</p></div>
-          <div className="p-3 border rounded-lg bg-pink-50/50"><Zap className="w-5 h-5 text-pink-600 mx-auto mb-1" /><p className="text-lg font-bold">{data.total_sugar.toFixed(1)}g</p><p className="text-xs text-muted-foreground">Sugar</p></div>
-          {/* === NAYA ENERGY CARD YAHAN HAI === */}
-          <div className="p-3 border rounded-lg bg-purple-50/50"><Sparkles className="w-5 h-5 text-purple-600 mx-auto mb-1" /><p className="text-lg font-bold">{Math.round(data.total_energy_kj)}</p><p className="text-xs text-muted-foreground">Energy (kJ)</p></div>
+          <div className="p-3 border rounded-lg bg-red-50/50">
+            <Flame className="w-5 h-5 text-red-600 mx-auto mb-1" />
+            <p className="text-lg font-bold">{Math.round(data.total_calories)}</p>
+            <p className="text-xs text-muted-foreground">Calories</p>
+          </div>
+          <div className="p-3 border rounded-lg bg-green-50/50">
+            <Beef className="w-5 h-5 text-green-600 mx-auto mb-1" />
+            <p className="text-lg font-bold">{data.total_protein.toFixed(1)}g</p>
+            <p className="text-xs text-muted-foreground">Protein</p>
+          </div>
+          <div className="p-3 border rounded-lg bg-blue-50/50">
+            <Gauge className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+            <p className="text-lg font-bold">{data.total_carbs.toFixed(1)}g</p>
+            <p className="text-xs text-muted-foreground">Carbs</p>
+          </div>
+          <div className="p-3 border rounded-lg bg-yellow-50/50">
+            <Droplets className="w-5 h-5 text-yellow-600 mx-auto mb-1" />
+            <p className="text-lg font-bold">{data.total_fat.toFixed(1)}g</p>
+            <p className="text-xs text-muted-foreground">Fat</p>
+          </div>
+          <div className="p-3 border rounded-lg bg-pink-50/50">
+            <Zap className="w-5 h-5 text-pink-600 mx-auto mb-1" />
+            <p className="text-lg font-bold">{data.total_sugar.toFixed(1)}g</p>
+            <p className="text-xs text-muted-foreground">Sugar</p>
+          </div>
+          <div className="p-3 border rounded-lg bg-purple-50/50">
+            <Sparkles className="w-5 h-5 text-purple-600 mx-auto mb-1" />
+            <p className="text-lg font-bold">{Math.round(data.total_energy_kj)}</p>
+            <p className="text-xs text-muted-foreground">Energy (kJ)</p>
+          </div>
         </div>
-        <div className="space-y-3 pt-2"><h3 className="text-md font-semibold border-b pb-1">Additional Nutrients (Total)</h3><div className="grid grid-cols-2 gap-4"><p><span className="font-medium flex items-center"><Leaf className="w-4 h-4 mr-2 text-amber-600" />Fiber:</span> {data.total_fiber.toFixed(1)}g</p><p className="col-span-2"><span className="font-medium flex items-center"><HeartPulse className="w-4 h-4 mr-2 text-red-500" />Sodium:</span> {data.total_sodium_mg.toFixed(0)}mg</p></div></div>
-        <div className="p-4 rounded-lg bg-green-50 border border-green-200"><h4 className="flex items-center font-bold text-green-700 mb-2"><CheckCircle className="w-5 h-5 mr-2" />AI Suggestion</h4><p className="text-sm text-green-600">{data.suggestion}</p></div>
-        {data.precautions && data.precautions.toLowerCase() !== 'none' && !data.precautions.toLowerCase().includes('no specific precautions') ? (<div className="p-4 rounded-lg bg-red-50 border border-red-200"><h4 className="flex items-center font-bold text-red-700 mb-2"><AlertTriangle className="w-5 h-5 mr-2" />Important Precautions</h4><p className="text-sm text-red-600 font-medium">{data.precautions}</p><p className="text-xs mt-2 text-red-500">Always consult a healthcare professional for specific dietary advice.</p></div>) : (<div className="p-4 rounded-lg bg-indigo-50 border border-indigo-200"><h4 className="flex items-center font-bold text-indigo-700 mb-2"><Info className="w-5 h-5 mr-2" />General Advice</h4><p className="text-sm text-indigo-600">{data.precautions}</p></div>)}
+
+        {/* === ADDITIONAL NUTRIENTS SECTION (UPDATED) === */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-md font-semibold border-b pb-1">Additional Nutrients (Total)</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <Leaf className="w-4 h-4 text-amber-600" />
+              <div>
+                <span className="font-semibold">Fiber:</span>
+                <p className="text-muted-foreground">{data.total_fiber.toFixed(1)}g</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <HeartPulse className="w-4 h-4 text-red-500" />
+              <div>
+                <span className="font-semibold">Sodium:</span>
+                <p className="text-muted-foreground">{data.total_sodium_mg.toFixed(0)}mg</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Bone className="w-4 h-4 text-slate-500" />
+              <div>
+                <span className="font-semibold">Calcium:</span>
+                <p className="text-muted-foreground">{data.total_calcium_mg.toFixed(0)}mg</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Feather className="w-4 h-4 text-gray-600" />
+              <div>
+                <span className="font-semibold">Iron:</span>
+                <p className="text-muted-foreground">{data.total_iron_mg.toFixed(1)}mg</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-orange-500" />
+              <div>
+                <span className="font-semibold">Vitamin C:</span>
+                <p className="text-muted-foreground">{data.total_vitamin_c_mg.toFixed(1)}mg</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Wind className="w-4 h-4 text-sky-500" />
+              <div>
+                <span className="font-semibold">Vitamin A:</span>
+                <p className="text-muted-foreground">{data.total_vitamin_a_mcg.toFixed(0)}µg</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sun className="w-4 h-4 text-yellow-500" />
+              <div>
+                <span className="font-semibold">Vitamin D:</span>
+                <p className="text-muted-foreground">{data.total_vitamin_d_mcg.toFixed(0)}µg</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Banana className="w-4 h-4 text-yellow-600" />
+              <div>
+                <span className="font-semibold">Potassium:</span>
+                <p className="text-muted-foreground">{data.total_potassium_mg.toFixed(0)}mg</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* === SUGGESTION & PRECAUTIONS (NO CHANGE) === */}
+        <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+          <h4 className="flex items-center font-bold text-green-700 mb-2"><CheckCircle className="w-5 h-5 mr-2" />AI Suggestion</h4>
+          <p className="text-sm text-green-600">{data.suggestion}</p>
+        </div>
+        {data.precautions && data.precautions.toLowerCase() !== 'none' && !data.precautions.toLowerCase().includes('no specific precautions') ? (
+          <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+            <h4 className="flex items-center font-bold text-red-700 mb-2"><AlertTriangle className="w-5 h-5 mr-2" />Important Precautions</h4>
+            <p className="text-sm text-red-600 font-medium">{data.precautions}</p>
+            <p className="text-xs mt-2 text-red-500">Always consult a healthcare professional for specific dietary advice.</p>
+          </div>
+        ) : (
+          <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-200">
+            <h4 className="flex items-center font-bold text-indigo-700 mb-2"><Info className="w-5 h-5 mr-2" />General Advice</h4>
+            <p className="text-sm text-indigo-600">{data.precautions}</p>
+          </div>
+        )}
       </CardContent>
-      <CardFooter><Button onClick={onLogMeal} className="w-full" disabled={!user}><Plus className="w-4 h-4 mr-2" />{user ? 'Log This Meal' : 'Login to Log Meal'}</Button></CardFooter>
+      <CardFooter>
+        <Button onClick={onLogMeal} className="w-full" disabled={!user}>
+          <Plus className="w-4 h-4 mr-2" />
+          {user ? 'Log This Meal' : 'Login to Log Meal'}
+        </Button>
+      </CardFooter>
     </Card>
   </motion.div>
 );
-
 const LoadingState = () => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
     <div className="mt-8 space-y-4"><h3 className="text-lg font-semibold text-center text-primary">AI is analyzing...</h3><Progress value={70} className="h-2 animate-pulse" /><div className="space-y-3 pt-4"><Skeleton className="h-6 w-3/4 mx-auto" /><Skeleton className="h-4 w-5/6 mx-auto" /><div className="grid grid-cols-4 gap-4 pt-4"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div><Skeleton className="h-20 w-full" /></div></div>
@@ -201,12 +323,12 @@ const Scanner = () => {
       <main className="py-12 md:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-foreground">AI Food Scanner</h1>
-            <p className="text-muted-foreground mt-2">Get instant nutritional analysis for any meal.</p>
+            <h1 className="text-4xl font-bold text-green-600">AI Food Scanner</h1>
+            <p className="text-black-700 mt-2">Get instant nutritional analysis for any meal.</p>
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Analyze Your Meal</CardTitle>
+              <CardTitle className="text-green-500">Analyze Your Meal</CardTitle>
               <CardDescription>Click below to use your camera or upload an image, or just type to describe.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
