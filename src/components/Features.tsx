@@ -1,4 +1,3 @@
-// import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -8,11 +7,23 @@ import {
   Target, 
   Brain, 
   TrendingUp,
-  // Utensils,
   Activity
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
 
 const Features = () => {
+  const navigate = useNavigate(); // ✅ Navigation hook
+
+  const handleFeatureClick = (title: string) => {
+    if (title === "Smart Food Scanner") {
+      navigate('/scanner'); // ✅ Redirect to scanner
+    } else if (title === "Health Blog") {
+      navigate('/blog'); // ✅ Redirect to blog section
+    } else if (title === "Progress Tracking") {
+      navigate('/dashboard'); // ✅ Redirect to dashboard
+    }
+  };
+
   const features = [
     {
       icon: <Scan className="w-8 h-8" />,
@@ -68,7 +79,8 @@ const Features = () => {
           {features.map((feature, index) => (
             <Card 
               key={index} 
-              className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 border-border/50 animate-fade-in"
+              onClick={() => handleFeatureClick(feature.title)} // ✅ Added click handler
+              className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 border-border/50 animate-fade-in cursor-pointer" // ✅ Added pointer
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardHeader className="text-center pb-4">

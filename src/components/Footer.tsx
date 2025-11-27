@@ -1,8 +1,20 @@
 // import React from 'react';
 import { Activity, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Footer = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGetStartedClick = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
   return (
     <footer className="bg-foreground text-background py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,7 +31,7 @@ const Footer = () => {
               Transform your health journey with AI-powered nutrition tracking and personalized wellness solutions.
             </p>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="border-background/20 text-background hover:bg-background/10">
+              <Button variant="outline" size="sm" className="border-background/20 text-background hover:bg-background/10" onClick={handleGetStartedClick}>
                 Get Started
               </Button>
             </div>
@@ -55,15 +67,15 @@ const Footer = () => {
             <ul className="space-y-3 text-background/70">
               <li className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <span>support@healthifymeai.com</span>
+                <span>atifmahpur@gmail.com</span>
               </li>
               <li className="flex items-center space-x-2">
                 <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>+91 8797781250</span>
               </li>
               <li className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4" />
-                <span>San Francisco, CA</span>
+                <span>Bihar, Siwan</span>
               </li>
             </ul>
           </div>

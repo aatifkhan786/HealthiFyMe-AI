@@ -1,1 +1,19 @@
-project_id = "hgftzkknfzmehgasvmay";
+# supabase/config.toml
+
+project_id = "hgftzkknfzmehgasvmay"
+
+[api]
+port = 54321
+schemas = ["public", "storage", "graphql"]
+extra_search_path = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
+
+# Define the function without any secrets
+[functions.daily-health-scraper]
+verify_jwt = false

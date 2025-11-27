@@ -9,6 +9,12 @@ import Auth from "./pages/auth";
 import Dashboard from "./pages/Dashboard";
 import Scanner from "./pages/Scanner";
 import NotFound from "./pages/NotFound";
+// === Your existing imports ===
+import Blog from '@/components/Blog';
+import Exercise from "./pages/exercise";
+// === The import for the AI Talk page ===
+// Make sure your file is named 'AiTalk.tsx' inside 'src/components/'
+import AITalk from "./components/AiTalk";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +30,13 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/scanner" element={<Scanner />} />
+            
+            {/* === Your existing Blog route === */}
+            <Route path="/blog" element={<Blog />} />
+
+            {/* === CHANGE THIS LINE: Removed the dash from the path === */}
+            <Route path="/aitalk" element={<AITalk />} />
+            <Route path="/exercise" element={<Exercise />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,3 +1,4 @@
+// --- Dashboard.tsx (complete corrected) ---
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,18 +20,30 @@ if (!GEMINI_API_KEY) { throw new Error("Missing Gemini API Key in .env file"); }
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
+// --- FIX: health_conditions is string (Supabase text column) ---
 interface Profile {
-  user_id: string; name: string; age?: number | null; height?: number | null;
-  weight?: number | null; blood_group?: string | null;
-  daily_calorie_target?: number | null; daily_protein_target?: number | null;
-  ideal_body_weight?: number | null; goal?: string | null;
-  activity_level?: string | null; health_conditions?: string[] | null;
+  user_id: string;
+  name: string;
+  age?: number | null;
+  height?: number | null;
+  weight?: number | null;
+  blood_group?: string | null;
+  daily_calorie_target?: number | null;
+  daily_protein_target?: number | null;
+  ideal_body_weight?: number | null;
+  goal?: string | null;
+  activity_level?: string | null;
+  health_conditions?: string | null; // <-- fixed to string
   daily_water_target?: number | null;
 }
 
 interface FoodScan {
-  user_id: string; food_name: string; calories_per_100g: number;
-  protein_per_100g: number; consumed_at: string; portion_size: number;
+  user_id: string;
+  food_name: string;
+  calories_per_100g: number;
+  protein_per_100g: number;
+  consumed_at: string;
+  portion_size: number;
   ai_suggestion?: string | null;
 }
 
@@ -72,7 +85,7 @@ const Dashboard = () => {
     name: '', age: '', height: '', weight: '', blood_group: '',
     goal: '',
     activity_level: '',
-    health_conditions: [] as string[]
+    health_conditions: "" as string // <-- store as string to match Supabase `text`
   });
 
   const formatText = (text: string | null | undefined) => {
@@ -89,7 +102,7 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  // === NAYA REALTIME USEEFFECT YAHAN ADD KIYA GAYA HAI ===
+  // === REALTIME SUBSCRIBE FOR FOOD SCANS ===
   useEffect(() => {
     if (!user) return;
 
@@ -108,7 +121,7 @@ const Dashboard = () => {
           toast({
             title: "Dashboard Updated!",
             description: `${payload.new.food_name} has been added to your intake list.`
-          })
+          });
         }
       )
       .subscribe();
@@ -134,32 +147,45 @@ const Dashboard = () => {
     if (!user) return;
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('user_id', user.id).single<Profile>();
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && (error as any).code !== 'PGRST116') throw error;
       if (data) {
         setProfile(data);
         setFormData({
-          name: data.name || '', age: data.age?.toString() || '', height: data.height?.toString() || '',
-          weight: data.weight?.toString() || '', blood_group: data.blood_group || '',
+          name: data.name || '',
+          age: data.age?.toString() || '',
+          height: data.height?.toString() || '',
+          weight: data.weight?.toString() || '',
+          blood_group: data.blood_group || '',
           goal: data.goal || '',
           activity_level: data.activity_level || '',
-          // === YAHAN BADLAV HAI ===
-          health_conditions: Array.isArray(data.health_conditions) ? data.health_conditions : []
+          // --- FIX: treat health_conditions as string ---
+          health_conditions: (typeof data.health_conditions === 'string' ? data.health_conditions : (data.health_conditions ? String(data.health_conditions) : '')) || ''
         });
       } else {
         setEditing(true);
-        setFormData(prev => ({ ...prev, name: user?.user_metadata?.name || '' }));
+        setFormData(prev => ({ ...prev, name: (user as any)?.user_metadata?.name || '' }));
       }
-    } catch (error) { console.error('Error fetching profile:', error); } finally { setLoading(false); }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchTodaysFoodScans = async () => {
     if (!user) return;
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase.from('food_scans').select('*').eq('user_id', user.id).gte('consumed_at', `${today} 00:00:00`).lt('consumed_at', `${today} 23:59:59`).returns<FoodScan[]>();
+      const { data, error } = await supabase.from('food_scans').select('*')
+        .eq('user_id', user.id)
+        .gte('consumed_at', `${today} 00:00:00`)
+        .lt('consumed_at', `${today} 23:59:59`)
+        .returns<FoodScan[]>();
       if (error) throw error;
       setFoodScans(data || []);
-    } catch (error) { console.error('Error fetching food scans:', error); }
+    } catch (error) {
+      console.error('Error fetching food scans:', error);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -169,24 +195,30 @@ const Dashboard = () => {
       const age = formData.age ? parseInt(formData.age) : null;
       const height = formData.height ? parseFloat(formData.height) : null;
       const weight = formData.weight ? parseFloat(formData.weight) : null;
-      let targets = {};
+      let targets: Record<string, number> = {};
       if (age && height && weight && formData.goal && formData.activity_level) {
         toast({ title: 'AI is thinking...', description: 'Generating personalized health targets.' });
-        const prompt = `Based on user data - Age: ${age}, Height: ${height}cm, Weight: ${weight}kg, Health Goal: ${formData.goal}, Activity Level: ${formData.activity_level}, Health Conditions: ${formData.health_conditions?.join(', ') || 'None'}. 
+        const prompt = `Based on user data - Age: ${age}, Height: ${height}cm, Weight: ${weight}kg, Health Goal: ${formData.goal}, Activity Level: ${formData.activity_level}, Health Conditions: ${formData.health_conditions || 'None'}. 
         Calculate ideal_body_weight, daily_calorie_target, daily_protein_target, and daily_water_target (in ml).
         Respond ONLY in a valid JSON format: {"ideal_body_weight": number, "daily_calorie_target": number, "daily_protein_target": number, "daily_water_target": number}.`;
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
+        // remove ```json fences if any then parse
         const aiResponse = JSON.parse(responseText.replace(/```json|```/g, '').trim());
         targets = aiResponse;
       }
       const profileData = {
-        user_id: user.id, name: formData.name, age, height, weight,
+        user_id: user.id,
+        name: formData.name,
+        age,
+        height,
+        weight,
         blood_group: formData.blood_group || null,
         goal: formData.goal || null,
         activity_level: formData.activity_level || null,
-        health_conditions: formData.health_conditions.length > 0 ? formData.health_conditions : null,
+        // --- FIX: save health_conditions as string or null ---
+        health_conditions: formData.health_conditions ? formData.health_conditions : null,
         ...targets
       };
       const { error } = await supabase.from('profiles').upsert(profileData, { onConflict: 'user_id' });
@@ -195,8 +227,10 @@ const Dashboard = () => {
       setEditing(false);
       fetchProfile();
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to update profile', variant: 'destructive' });
-    } finally { setIsSaving(false); }
+      toast({ title: 'Error', description: error?.message || 'Failed to update profile', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const calculateTotal = (key: 'calories_per_100g' | 'protein_per_100g') => {
@@ -276,7 +310,13 @@ const Dashboard = () => {
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="health_conditions">Health Conditions (Optional)</Label>
-                      <Input id="health_conditions" placeholder="e.g., Diabetes, High BP" value={(formData.health_conditions || []).join(', ')} onChange={(e) => setFormData({ ...formData, health_conditions: e.target.value.split(',').map(item => item.trim()) })} />
+                      {/* FIX: health_conditions is a simple string (comma-separated) */}
+                      <Input
+                        id="health_conditions"
+                        placeholder="e.g., Diabetes, High BP"
+                        value={formData.health_conditions}
+                        onChange={(e) => setFormData({ ...formData, health_conditions: e.target.value })}
+                      />
                     </div>
                   </div>
                   <Button onClick={handleSaveProfile} className="w-full" disabled={isSaving}>
@@ -295,7 +335,13 @@ const Dashboard = () => {
                       {profile.ideal_body_weight && <div><p className="text-sm text-muted-foreground">Ideal Weight (AI)</p><p className="font-medium">{profile.ideal_body_weight} kg</p></div>}
                       {profile.goal && <div><p className="text-sm text-muted-foreground">Health Goal</p><p className="font-medium">{formatText(profile.goal)}</p></div>}
                       {profile.activity_level && <div><p className="text-sm text-muted-foreground">Activity Level</p><p className="font-medium">{formatText(profile.activity_level)}</p></div>}
-                      {profile.health_conditions && profile.health_conditions.length > 0 && <div className="md:col-span-2"><p className="text-sm text-muted-foreground">Health Conditions</p><p className="font-medium">{Array.isArray(profile.health_conditions) ? profile.health_conditions.join(', ') : profile.health_conditions}</p></div>}
+                      {/* FIX: display health_conditions as string */}
+                      {profile.health_conditions && profile.health_conditions.length > 0 && (
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-muted-foreground">Health Conditions</p>
+                          <p className="font-medium">{profile.health_conditions}</p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="text-muted-foreground">No profile data available. Click 'Edit Profile' to add your information.</p>
