@@ -6,26 +6,26 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // 🟢 Complete sign-in using the URL received in email
-        await supabase.auth.exchangeCodeForSession(window.location.href);
+    const verify = async () => {
+      const hash = window.location.hash;
 
-        // 🟢 Check if session created
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-          navigate("/dashboard");
-        } else {
-          navigate("/auth");
-        }
-      } catch (error) {
-        console.error("Error exchanging session:", error);
+      // If URL contains error params → show message & redirect
+      if (hash.includes("error")) {
+        alert("Verification link expired or invalid. Please request a new email verification.");
         navigate("/auth");
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        navigate("/dashboard");   // success
+      } else {
+        navigate("/auth");        // failed
       }
     };
 
-    handleCallback();
+    verify();
   }, []);
 
   return (
