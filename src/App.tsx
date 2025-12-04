@@ -2,20 +2,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";  // ⬅️ FIXED
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/auth";
 import Dashboard from "./pages/Dashboard";
 import Scanner from "./pages/Scanner";
 import NotFound from "./pages/NotFound";
-// === Your existing imports ===
 import Blog from '@/components/Blog';
 import Exercise from "./pages/exercise";
-// === The import for the AI Talk page ===
-// Make sure your file is named 'AiTalk.tsx' inside 'src/components/'
 import AITalk from "./components/AiTalk";
 import AuthCallback from "./pages/AuthCallback";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,26 +22,21 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+
+        <Router>   {/* ⬅️ FIXED */}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/scanner" element={<Scanner />} />
-            
-            {/* === Your existing Blog route === */}
             <Route path="/blog" element={<Blog />} />
-
-            {/* === CHANGE THIS LINE: Removed the dash from the path === */}
             <Route path="/aitalk" element={<AITalk />} />
             <Route path="/exercise" element={<Exercise />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-            
-
           </Routes>
-        </BrowserRouter>
+        </Router>   {/* ⬅️ FIXED */}
+
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
