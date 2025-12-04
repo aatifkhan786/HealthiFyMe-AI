@@ -15,7 +15,7 @@ import Exercise from "./pages/exercise";
 // === The import for the AI Talk page ===
 // Make sure your file is named 'AiTalk.tsx' inside 'src/components/'
 import AITalk from "./components/AiTalk";
-
+import AuthCallback from "./pages/AuthCallback";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -28,6 +28,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/scanner" element={<Scanner />} />
             
@@ -39,6 +40,8 @@ const App = () => (
             <Route path="/exercise" element={<Exercise />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
+            
+
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
