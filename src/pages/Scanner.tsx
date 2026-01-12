@@ -268,12 +268,12 @@ const Scanner = () => {
     try {
       let result;
       if (imageFile) {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const imagePart = await fileToGenerativePart(imageFile);
         const prompt = `${SYSTEM_INSTRUCTION}\n\nUser query: ${searchTerm || 'Analyze the food in this image.'}`;
         result = await model.generateContent([prompt, imagePart]);
       } else {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `${SYSTEM_INSTRUCTION}\n\nUser query: ${searchTerm}`;
         result = await model.generateContent(prompt);
       }
