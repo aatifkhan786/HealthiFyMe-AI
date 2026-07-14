@@ -310,6 +310,7 @@ const Scanner = () => {
         ai_suggestion: nutritionData.suggestion,
         image_url: imageUrl,
         portion_size: 1, // Represents 1 analyzed portion
+        consumed_at: new Date().toISOString(),
       });
       if (error) throw error;
       toast({ title: "Logged!", description: `${nutritionData.food_name} added to your tracker.` });
